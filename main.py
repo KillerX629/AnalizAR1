@@ -43,7 +43,7 @@ class MyFrame(wx.Frame):
         self.promedioAnual = wx.StaticText(panel1, label="Promedio anual:")
         self.promDia = wx.StaticText(panel1,label="Promedio del dia:")
 
-        self.fecha = wx.TextCtrl(panel1, label= "fecha")
+        self.fecha = wx.TextCtrl(panel1)
 
         sizerFecha.Add(self.fecha, flag=wx.EXPAND )
         sizerAbajo.Add(self.comboboxEmpresas, 1, wx.ALIGN_CENTER)
