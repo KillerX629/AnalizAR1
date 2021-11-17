@@ -35,6 +35,7 @@ class MyFrame(wx.Frame):
         botonGuardar = wx.Button(panel1, label="Guardar")
         botonGuardar.Bind(wx.EVT_BUTTON, self.guardarReg)
         botonCargar = wx.Button(panel1, label="Cargar")
+        botonCargar.Bind(wx.EVT_BUTTON, self.cargarReg)
 
         #Elegida la empresa, debe tener una opción donde se pueda elegir una fecha y mostrar el valor promedio de ese dia (media aritmética entre precio de cierre y precio de apertura)
         #También debe tener otra opción que calcule y muestre el promedio ANUAL (o sea, teniendo en cuenta todos los datos del archivo) del precio de Cierre
@@ -112,17 +113,35 @@ class MyFrame(wx.Frame):
             self.promDia.SetLabel("Promedio del dia: {}".format(promfecha))
 
     def guardarReg(self,event):
-        dialogoGuardar = wx.FileDialog(self)
+        dialogoGuardar = wx.FileDialog(self,defaultDir = "../guardados/")
 
-        if self.comboboxEmpresas.IsEmpty():
-            wx.MessageBox("No puede guardar antes de elegir una empresa.","Advertencia",parent=self)
+        if self.comboboxEmpresas.IsTextEmpty() :
+            advertencia = wx.MessageDialog(self,"No puede guardar antes de elegir una empresa.","Advertencia")
+            advertencia.ShowModal()
 
         else:
             if dialogoGuardar.ShowModal() == wx.ID_OK:
                 self.rutaGuardar = dialogoGuardar.GetPath() + ".CSV"
 
-                with open(self.rutaGuardar, "wb") as arch:
+                with open(self.rutaGuardar, "w") as arch:
                     writer = csv.writer(arch, delimiter=",")
+                    datos = [self.precioAlto.GetLabel(),self.precioBajo.GetLabel(),self.promedioAnual.GetLabel()]
+                    writer.writerow(datos)
+                    self.rutaGuardar = " "
+
+    def cargarReg(self,event):
+        dialogoCargar = wx.FileDialog(self,defaultDir= "../guardados/")
+
+        if dialogoCargar.ShowModal() == wx.ID_OK:
+            self.rutaGuardar = dialogoCargar.GetPath()
+            with open(self.rutaGuardar, 'r') as arch:
+                reader = csv.reader(arch)
+                fila1 = next(reader)
+
+                self.precioBajo.SetLabel(fila1[1])
+                self.precioAlto.SetLabel(fila1[0])
+                self.promedioAnual.SetLabel(fila1[2])
+                self.rutaGuardar = " "
 
 
 
