@@ -1,3 +1,5 @@
+import csv
+
 import wx
 import numpy as np
 import pandas as pd
@@ -23,7 +25,7 @@ class MyFrame(wx.Frame):
 
         self.comboboxEmpresas = wx.ComboBox(panel1, choices=self.empresas, size=wx.DefaultSize)
         self.comboboxEmpresas.Bind(wx.EVT_COMBOBOX, self.cargarEmpresa)
-        sizerPanel1 = wx.BoxSizer(wx.VERTICAL)
+        sizerPanel1 = wx.BoxSizer(wx.VERTICAL)#todo el panel1
 
         sizerMedio = wx.GridSizer(rows=2, cols=2, hgap=3, vgap=5)
         sizerArriba = wx.BoxSizer(wx.HORIZONTAL)
@@ -31,6 +33,7 @@ class MyFrame(wx.Frame):
         sizerFecha = wx.BoxSizer(wx.HORIZONTAL)
 
         botonGuardar = wx.Button(panel1, label="Guardar")
+        botonGuardar.Bind(wx.EVT_BUTTON, self.guardarReg)
         botonCargar = wx.Button(panel1, label="Cargar")
 
         #Elegida la empresa, debe tener una opción donde se pueda elegir una fecha y mostrar el valor promedio de ese dia (media aritmética entre precio de cierre y precio de apertura)
@@ -43,7 +46,8 @@ class MyFrame(wx.Frame):
         self.promedioAnual = wx.StaticText(panel1, label="Promedio anual:")
         self.promDia = wx.StaticText(panel1,label="Promedio del dia:")
 
-        self.fecha = wx.TextCtrl(panel1)
+        self.fecha = wx.ComboBox(panel1)
+        self.fecha.Bind(wx.EVT_COMBOBOX, self.calcPromFecha)
 
         sizerFecha.Add(self.fecha, flag=wx.EXPAND )
         sizerAbajo.Add(self.comboboxEmpresas, 1, wx.ALIGN_CENTER)
@@ -59,7 +63,7 @@ class MyFrame(wx.Frame):
 
 
         sizerPanel1.Add(sizerArriba, flag=wx.EXPAND | wx.TOP | wx.CENTER, border=2)
-        sizerPanel1.Add(sizerMedio, flag=wx.EXPAND | wx.CENTER)
+        sizerPanel1.Add(sizerMedio, flag=wx.EXPAND | wx.CENTER, border=5)
         sizerPanel1.Add(sizerAbajo, flag=wx.EXPAND | wx.BOTTOM | wx.CENTER, border=2)
         sizerPanel1.Add(sizerFecha, flag= wx.BOTTOM)
 
@@ -81,13 +85,45 @@ class MyFrame(wx.Frame):
 
     def actualizarTextos(self, empresa):
         df = pd.read_csv("../empresas/"+ empresa)
-        print(df)
+        self.empresaCargada = df
         alto = df['High'].max()
         bajo = df['Low'].min()
         promAn = df['Close'].median()
         self.precioAlto.SetLabel("Precio mas alto: {}".format(alto))
         self.precioBajo.SetLabel("Precio mas bajo: {}".format(bajo))
         self.promedioAnual.SetLabel("Promedio anual: {}".format(promAn))
+        self.promDia.SetLabel("Promedio del dia: ")
+        self.actualizarFechas()
+
+    def actualizarFechas(self):
+        self.fecha.Clear()
+        self.fecha.Append(self.empresaCargada['Date'].tolist())
+
+    def calcPromFecha(self, event):
+        if self.fecha.IsEmpty():
+            pass
+        else:
+            indice = self.empresaCargada.index[self.empresaCargada['Date'] == self.fecha.GetValue()]
+            max = self.empresaCargada['High'].iloc[indice].item()
+            min = self.empresaCargada['Low'].iloc[indice].item()
+
+            promfecha = (max + min)/2
+
+            self.promDia.SetLabel("Promedio del dia: {}".format(promfecha))
+
+    def guardarReg(self,event):
+        dialogoGuardar = wx.FileDialog(self)
+
+        if self.comboboxEmpresas.IsEmpty():
+            wx.MessageBox("No puede guardar antes de elegir una empresa.","Advertencia",parent=self)
+
+        else:
+            if dialogoGuardar.ShowModal() == wx.ID_OK:
+                self.rutaGuardar = dialogoGuardar.GetPath() + ".CSV"
+
+                with open(self.rutaGuardar, "wb") as arch:
+                    writer = csv.writer(arch, delimiter=",")
+
 
 
 
